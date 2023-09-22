@@ -13,6 +13,7 @@ checkpoint beast:
     params:
         beast_command = lambda wildcards: _get_analysis_param(wildcards, "beast", "command"), 
         action = lambda wildcards: _get_analysis_param(wildcards, "beast", "action"),
+        user_check = lambda wildcards: _get_analysis_param(wildcards, "beast", "user_check"),,
         xml_params = lambda wildcards: str(_get_analysis_param(wildcards, "beast", "xml_params")).replace(":", "=").replace(
             "{", "\"").replace("}", "\"").replace(" ", "").replace("'", ""),
         # mrs = lambda wildcards: _get_mrs(wildcards),
@@ -36,8 +37,12 @@ checkpoint beast:
         else
             ACTION="overwrite"
         fi
-
-        echo NO > {output.is_converged}
+        
+        if [ {params.user_check} == True ]; then
+            echo NO > {output.is_converged}
+        else
+            echo YES > {output.is_converged}
+        fi
     
         {params.beast_command} \
             -D aligned_fasta={input.alignment} \
@@ -53,7 +58,6 @@ checkpoint beast:
         [ -f {params.folder_name}/running/{params.file_name}.trees ] && mv {params.folder_name}/running/{params.file_name}.trees {output.trees} 
 
         """
-
 
 
 
@@ -78,7 +82,6 @@ rule aggregate_runs:
     input:
         runs = _is_converged 
     output:
-        # combined_run = "results/analysis/beast/{analysis}/chains/{dataset}.{chain}.{output}",
         combined_run = "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
     params:
         input_command = lambda wildcards, input: " -log ".join(input.runs)
@@ -86,19 +89,6 @@ rule aggregate_runs:
         """
         logcombiner -log {params.input_command} -o {output.combined_run} 2>&1 | tee -a {log}
         """
-
-# rule aggregate_runs_trees:
-#     input:
-#         trees = _is_converged + ".trees"
-#     output:
-#         trees = "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.trees",
-#     params:
-#         input_trees = lambda input: " -log ".join(input.trees) 
-#     shell:
-#         """
-#         logcombiner -log {params.input_trees} -o {output.tree} 2>&1 | tee -a {log}
-#         """
-
 def _get_chains(wildcards):
     files = expand(
         "results/analysis/beast/{{analysis}}/chains/{{dataset}}{{sufix,.*}}.{chain}.{{output}}",
@@ -126,76 +116,7 @@ rule combine_chains:
         logcombiner -log {params.input_command} -o {output.combined_chain} -b {params.burnin}  2>&1 | tee -a {log}
         """
 
-# rule combine_chains:
-#     message: 
-#         """
-#         Combine chain files: {input.chain_files} with LogCombiner.
-#         """
-#     input:
-#         chain_files = _get_chains  
-#     output:
-#         combined_chain = "results/analysis/beast/{analysis}/{dataset}.{output}",
-#     # log:
-#     #     "logs/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.txt"
-#     # benchmark:
-#     #     "benchmarks/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
-#     params:
-#         burnin =  lambda wildcards: _get_analysis_param(wildcards, "beast", "burnin"),
-#         input_command = lambda wildcards, input: " -log ".join(input) 
-#     shell:
-#         """
-#         logcombiner -log {params.input_command} -o {output.combined_chain} -b {params.burnin}  2>&1 | tee -a {log}
-#         """
-
-# rule combine_trees:
-#     message: 
-#         """
-#         Combine trace files: {input.trace_files} with LogCombiner v1.8.2.
-#         """
-#     input:
-#         trace_files = _get_trace_tocombine    
-#     output:
-#         combined_trees = "results/analysis/beast/{analysis}/{dataset}{sufix,.*}.trees",
-#     # log:
-#     #     "logs/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.txt"
-#     # benchmark:
-#     #     "benchmarks/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
-#     params:
-#         burnin =  lambda wildcards: _get_analysis_param(wildcards, "beast", "burnin"),
-#         input_command = lambda wildcards, input: " -log ".join(input) 
-#     shell:
-#         """
-#         logcombiner -log {params.input_command} -o {output.combined_trace} -b {params.burnin}  2>&1 | tee -a {log}
-#         """
-
-# def _get_typedtrees_tocombine(wildcards):
-#     files = expand(
-#         "results/{{dataset}}/beast/{{analysis}}/chains/{{subsampling}}.{{dseed}}.{bseed}.f.typed.node.trees",
-#         bseed = BEAST_SEED)
-#     return files
-
-# rule combine_typedtrees:
-#     message: 
-#         """
-#         Combine typed tree files: {input.tree_files} with LogCombiner v1.8.2.
-#         """
-#     input:
-#         tree_files = _get_typedtrees_tocombine    
-#     output:
-#         combined_typedtrees = "results/{dataset}/beast/{analysis}/{subsampling}.{dseed}.comb.typed.node.trees"
-#     log:
-#         "logs/combine_typedtrees_{dataset}_{analysis}_{subsampling}.{dseed}.txt"
-#     benchmark:
-#         "benchmarks/combine_typedtree_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
-#     params:
-#         burnin = lambda wildcards: config["beast"][wildcards.analysis].get("burnin") or config["beast"].get("burnin"),
-#         input_command = lambda wildcards, input: " -log ".join(input) 
-#     shell:
-#         """
-#         logcombiner -log {params.input_command} -o {output.combined_typedtrees} -b {params.burnin}  2>&1 | tee -a {log}
-#         """
-
-# rule summarize_typedtrees:
+# rule mcc_tree:
 #     message: 
 #         """
 #         Summarize trees to Maximum clade credibility tree with median node heights with TreeAnnotator.
@@ -215,29 +136,3 @@ rule combine_chains:
 #         """
 #         treeannotator -heights {params.heights} -b {params.burnin} -lowMem {input.combined_trees} {output.summary_tree} 2>&1 | tee -a {log} 
 #         """
-
-
-        # """
-        # if {params.action}==resume
-        #     if test -f "{params.folder_name}/{params.file_name}.state" && test -f "{params.folder_name}/{params.file_name}.log  && test -f "{params.folder_name}/{params.file_name}.trees; then
-        #         ACTION={params.action}
-        #         scp {output.trace} {params.folder_name}/{params.file_name}.log 
-        #         scp {output.trees} {params.folder_name}/{params.file_name}.trees
-        #     else
-        #         printf '%s\n' "Resumin" >&2error no state log or trees
-        #         exit 1
-        # fi
-
-        # mkdir -p {params.folder_name}
-        
-        # {params.beast_command} \
-        #     -D aligned_fasta={input.aln} \
-        #     -D {params.model_params} \
-        #     -D file_name={params.folder_name}/temp/{params.file_name} \
-        #     -seed {wildcards.bseed} \
-        #     -statefile "{params.folder_name}/{params.file_name}.state" \
-        #     -java -{params.action} {input.xml} 2>&1 | tee -a {log}
-        
-        # [ -f {params.folder_name}/temp/{params.file_name}.log ] && mv {params.folder_name}/temp/{params.file_name}.log {output.trace}
-        # [ -f {params.folder_name}/temp/{params.file_name}.trees ] && mv {params.folder_name}/temp/{params.file_name}.trees {output.trees} 
-        # """

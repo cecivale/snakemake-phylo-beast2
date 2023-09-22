@@ -51,8 +51,6 @@ for method in METHODS:
                 dseed = DATA_SEED, filetype = FILE_TYPE)
             all_files += files
 
-print(all_files)
-# all_files = ["results/data/primates/sequences.1.fasta", "results/data/primates/sequences.2.fasta"]
 
 rule all:
     input:

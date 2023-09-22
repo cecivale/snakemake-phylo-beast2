@@ -9,12 +9,13 @@
 
 # use snakemake templates
 
-run: # analysis name: - dataset name
-  # analysis1: 
-  #   - "dataset1"
-  #   - "dataset2"
-  # analysis2:
-  #   - "dataset2"
+run: 
+  # tool:
+    # analysis1: 
+    #   - "dataset1"
+    #   - "dataset2"
+    # analysis2:
+    #   - "dataset2"
   beast:
     intro:
     - "primates"
@@ -22,22 +23,14 @@ run: # analysis name: - dataset name
 config_datasets: "config/datasets.yaml"
 config_analyses: "config/analyses.yaml"
 
-# output:
-#   plot_dataset: true
-#   plot_tree: true
-#   check_ESS: true
-#   plot_parameters:
-#     - Re
-#     - ReAmongDemes
-#     - clockRate
-# check ESS, if passed MCC tree and parameter plots (user defined parameters)
-  # add config file for plotting output
-  # check ess of chains already combined, user defined burnin or try different values automatically to maximize ess
-  # use ugne's feast class to random initialize the parameters
+target_files:
+  iqtree: ["treefile", "png"]
+  treetime: ["nexus", "png"]
+  beast: ["log", "trees"]
 
-preprocessing:
-  align: false
-  mask: false
+
+# ------------- WIP
+
 
 # lapis:
 #   seq_id: "strain" 
@@ -52,8 +45,20 @@ preprocessing:
 #   mask_from_end: 200
 #   mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
 
-target_files:
-  iqtree: ["treefile", "png"]
-  treetime: ["nexus", "png"]
-  beast: ["log", "trees"]
+
+
+
+# output:
+#   plot_dataset: true
+#   plot_tree: true
+#   check_ESS: true
+#   plot_parameters:
+#     - Re
+#     - ReAmongDemes
+#     - clockRate
+# check ESS, if passed MCC tree and parameter plots (user defined parameters)
+  # add config file for plotting output
+  # check ess of chains already combined, user defined burnin or try different values automatically to maximize ess
+  # use ugne's feast class to random initialize the parameters
+
 

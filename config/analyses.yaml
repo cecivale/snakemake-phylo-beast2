@@ -1,5 +1,18 @@
 analyses:
   
+  beast:
+    intro:
+      xml: "resources/beast_xml/primate-mtDNA.xml"
+      command: "beast"
+      action: "overwrite"
+      user_check: TRUE
+      time: 7200
+      mem_mb: 4096
+      threads: 10
+      burnin: 10
+      chains: 2
+
+# Format example
   # analysis_tool1:
   #   analysis_name1:
   #     arg1: "value"
@@ -8,16 +21,3 @@ analyses:
   #   analysis_name2:
   #     arg1: "value"
   #     arg2: "value"
-
-  beast:
-    intro:
-      xml: "resources/beast_xml/primate-mtDNA.xml"
-      command: "beast"
-      action: "overwrite"
-      time: 7200
-      mem_mb: 4096
-      threads: 10
-      burnin: 10
-      chains: 2
-
-
