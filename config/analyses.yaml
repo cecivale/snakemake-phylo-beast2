@@ -13,7 +13,7 @@ analyses:
     intro:
       xml: "resources/beast_xml/primate-mtDNA.xml"
       command: "beast"
-      action: ""
+      action: "overwrite"
       time: 7200
       mem_mb: 4096
       threads: 10

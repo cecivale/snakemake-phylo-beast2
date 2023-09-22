@@ -12,10 +12,5 @@ rule select_sequences:
         # "logs/load_seqs_{dataset}_{subsampling}.{dseed}.txt" # TODO add log, change run to shell
     # conda:
     #     "envs/python-genetic-data.yaml"
-    shell:
-        """
-        python3 workflow/scripts/query_sequences.py \
-            --ids_file {input.ids} \
-            --output_file {output.sequences} \
-            --drop_incomplete True 2>&1 | tee {log}
-        """
+    script: 
+        "../scripts/query_sequences.py"

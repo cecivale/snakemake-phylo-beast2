@@ -32,8 +32,10 @@ wildcard_constraints:
     dataset="[A-Za-z0-9_]+",
     analysis="[A-Za-z0-9_]+",
     output="[A-Za-z]+",
-    sufix="[0-9.]+",
-    i="[0-9]"
+    sufix="[.][0-9]",
+    i="[0-9]",
+    dseed="[0-9]",
+    chain="[0-9]"
 
 # Final output files
 all_files = []
@@ -48,6 +50,9 @@ for method in METHODS:
             files = expand("results/analysis/" + method + "/" + analysis + "/" + dataset + "{dseed}.{filetype}", 
                 dseed = DATA_SEED, filetype = FILE_TYPE)
             all_files += files
+
+print(all_files)
+# all_files = ["results/data/primates/sequences.1.fasta", "results/data/primates/sequences.2.fasta"]
 
 rule all:
     input:
@@ -68,36 +73,38 @@ include: "rules/sample_selection.smk"
 include: "rules/sample_combine.smk" 
 include: "rules/subsampling.smk" #TODO proportional subsampling
 
-include: "rules/sequences_import.smk"
+include: "rules/sequence_selection.smk"
+include: "rules/alignment.smk"
 
-module lapis_import:
-    # snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
-    snakefile: "/Users/ceciliav/Tools/talking-to-LAPIS/python-snakemake/workflow/Snakefile"
-    config: config
+# module lapis_import:
+#     # snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
+#     snakefile: "/Users/ceciliav/Tools/talking-to-LAPIS/python-snakemake/workflow/Snakefile"
+#     config: config
 
-use rule load_metadata from lapis_import as lapis_select_samples
+# use rule load_metadata from lapis_import as lapis_select_samples
 
-use rule load_sequences from lapis_import as lapis_import_sequences with: 
-    input:
-        ids = _get_sequence_ids
-    output:
-        alignment = "results/data/{dataset}/aligned{sufix,.*}.fasta"
-    log:
-        "logs/lapis_import_seqs_{dataset}_{sufix,.*}.txt" 
+# use rule load_sequences from lapis_import as lapis_import_sequences with: 
+#     input:
+#         ids = _get_sequence_ids
+#     output:
+#         alignment = "results/data/{dataset}/aligned{sufix,.*}.fasta"
+#     log:
+#         "logs/lapis_import_seqs_{dataset}_{sufix,.*}.txt" 
 
-ruleorder: select_samples > lapis_select_samples 
-ruleorder: select_sequences > lapis_import_sequences 
+# ruleorder: select_samples > lapis_select_samples 
+# ruleorder: select_sequences > lapis_import_sequences 
 
-if config["preprocessing"]["align"]:
-    include: "rules/alignment.smk"
-    ruleorder: align > lapis_import_sequences 
+# if config["preprocessing"]["align"]:
+#     include: "rules/alignment.smk"
+#     ruleorder: align > lapis_import_sequences 
 
 
-if config["preprocessing"]["mask"]:
-        include: "rules/mask.smk"
+# if config["preprocessing"]["mask"]:
+#         include: "rules/mask.smk"
 
-include: "rules/phylogenetics.smk"
+# include: "rules/phylogenetics.smk"
 include: "rules/phylodynamics.smk"
 ruleorder: beast > aggregate_runs 
 ruleorder: beast > combine_chains 
-# TODO change from shell directive to script so they are accessible from module definition
+ruleorder: aggregate_runs > combine_chains 
+# # TODO change from shell directive to script so they are accessible from module definition

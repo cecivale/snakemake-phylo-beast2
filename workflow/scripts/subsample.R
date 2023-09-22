@@ -15,10 +15,8 @@ subsample <- function(ids_file, metadata_file, include_file, exclude_file,
   set.seed(seed)
   ids <- read_tsv(ids_file)
   df <- read_tsv(metadata_file) %>% 
-    filter(sample_id %in% ids$sample_id) %>%
-    mutate(week = floor_date(date, "week", week_start = 1))
-    #       id = genbankAccession)
-  print(names(df))
+    filter(sample_id %in% ids$sample_id)
+
   if (n != -1) {
     
     # Include and exclude specific sequences by id
@@ -53,9 +51,6 @@ subsample <- function(ids_file, metadata_file, include_file, exclude_file,
         mutate(p_cases = cases_week/sum(cases_week)) %>% ungroup
       df_prop <- left_join(df, p_week, by = c("week")) %>%
         replace_na(list(p_cases = 0))
-      print(p_week)
-      print(head(cases))
-      print(head(cases_filtered))
       subsample <- df_prop %>%
         sample_n(size = min(n(), n), replace = F, weight = p_cases)
       
@@ -63,6 +58,7 @@ subsample <- function(ids_file, metadata_file, include_file, exclude_file,
     } else if (method == "uniform") {
         
       # 3. Uniform in each week
+      df <- df %>% mutate(week = floor_date(date, "week", week_start = 1))
       n_weeks <- nrow(df %>% count(week = floor_date(date, "week", week_start = 1)))
       n_seq_week <- ceiling(n/n_weeks)
       df_seq_week <- df %>% count(week) %>%
@@ -81,15 +77,17 @@ subsample <- function(ids_file, metadata_file, include_file, exclude_file,
   else subsample <- df
   
   # Plot
-  gp <- ggplot(subsample %>% count(date, week)) +
-    geom_bar(aes(date, n, fill = factor(week)), stat = "identity") +
-    labs(title = paste("subsampled sequences, method:", method))
+  # gp <- ggplot(subsample %>% count(date, week)) +
+  #   geom_bar(aes(date, n, fill = factor(week)), stat = "identity") +
+  #   labs(title = paste("subsampled sequences, method:", method))
   
+  print(names(ids))
+  print(names(subsample))
   subsample_to_save <- left_join(subsample, ids) %>%
     select(names(ids))
   
   # Save plot and subsample
-  ggsave(gsub(".tsv", "_plot.pdf", output_file), gp, device = "pdf", width = 5)
+  # ggsave(gsub(".tsv", "_plot.pdf", output_file), gp, device = "pdf", width = 5)
   write_tsv(subsample_to_save, file = output_file)
   
 }

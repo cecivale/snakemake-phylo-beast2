@@ -1,7 +1,12 @@
 datasets:
 
   primates:
+    # replicates: 2
     sequences: "resources/data/primate-mtDNA.nex"
+    aligned: TRUE
+    # subsample:
+    #   n: 5 
+    #   method: "random"
 
   # covid_lapis:
   #   # replicates: 2

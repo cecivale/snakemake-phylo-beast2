@@ -84,9 +84,9 @@ def  _get_sequences_file(wildcards):
 def  _get_select_params(wildcards):
     return _get_dataset_param("select", wildcards)
 
-def  _get_seq_id(wildcards):
-    seq_id = _get_dataset_param("seq_id", wildcards) or config["lapis"]["seq_id"]
-    return seq_id
+# def  _get_seq_id(wildcards):
+#     seq_id = _get_dataset_param("seq_id", wildcards) or config["lapis"]["seq_id"]
+#     return seq_id
 
 def _get_deme(wildcards):
     if _is_structured(wildcards):
