@@ -9,16 +9,15 @@
 
 # use snakemake templates
 
-# run: 
-#   iqtree: "all_bb1000"
-#   beast: ["asymp_symp_d10", "asymp_symp_d5"]
-
 run: # analysis name: - dataset name
-  analysis1: 
-    - "dataset1"
-    - "dataset2"
-  analysis2:
-    - "dataset2"
+  # analysis1: 
+  #   - "dataset1"
+  #   - "dataset2"
+  # analysis2:
+  #   - "dataset2"
+  beast:
+    intro:
+    - "primates"
 
 config_datasets: "config/datasets.yaml"
 config_analyses: "config/analyses.yaml"
@@ -40,19 +39,21 @@ preprocessing:
   align: false
   mask: false
 
-lapis:
-  seq_id: "strain" 
-  database: "open" # gisaid or open
+# lapis:
+#   seq_id: "strain" 
+#   database: "open" # gisaid or open
+#   batch_size: 50
 
-align:
-  parameters:
+# # align:
+# #   parameters:
 
-mask:
-  mask_from_beginning: 100
-  mask_from_end: 200
-  mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
+# mask:
+#   mask_from_beginning: 100
+#   mask_from_end: 200
+#   mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
 
 target_files:
   iqtree: ["treefile", "png"]
+  treetime: ["nexus", "png"]
   beast: ["log", "trees"]
 

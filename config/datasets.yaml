@@ -1,195 +1,19 @@
 datasets:
-# Datasets
-  community1000:
-    replicates: 1
-    structure: 
-      asymp: 
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-      symp: 
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-        subsample:
-          n: 1000
-          method: "random" 
 
-  armydem_asymp:
-    replicates: 1
-    structure: 
-      asymp: 
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-      symp: 
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-          army_dem: "TRUE"
+  primates:
+    sequences: "resources/data/primate-mtDNA.nex"
 
-  community_armydem:
-    replicates: 1
-    structure: 
-      army_dem: 
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-          army_dem: "TRUE"
-      symp: 
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          qc: "TRUE"
-          army_demNot: "TRUE"
-        subsample:
-          n: 1000
-          method: "random" 
-
-  sw1:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 1
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          dateFrom: "2021-01-11"
-          dateTo: "2021-01-17"
-          qc: "TRUE"
-        subsample:
-          #underreporting: [1, 2.7,5,10]
-          n: 15 #"deme-balanced"
-          method: "random"
-
-  sw2:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 2
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          dateFrom: "2021-01-18"
-          dateTo: "2021-01-24"
-          qc: "TRUE"
-        subsample:
-          n: 30 #"deme-balanced"
-          method: "random"
-
-  sw3:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 3
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          dateFrom: "2021-02-08"
-          dateTo: "2021-02-14"
-          qc: "TRUE"
-        subsample:
-          n: 9 #"deme-balanced"
-          method: "random"
-
-  sw1_armydem:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 1
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          army_dem: "TRUE"
-          dateFrom: "2021-01-11"
-          dateTo: "2021-01-17"
-          qc: "TRUE"
-        subsample:
-          n: 18 #TODO "deme-balanced"
-          method: "random"
-
-  sw2_armydem:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 2
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          army_dem: "TRUE"
-          dateFrom: "2021-01-18"
-          dateTo: "2021-01-24"
-          qc: "TRUE"
-        subsample:
-          n: 35 #"deme-balanced"
-          method: "random"
-
-  sw3_armydem:
-    replicates: 1
-    structure: 
-      asymp:
-        metadata: "results/data/screening/metadata.tsv"
-        sequences: "lapis"
-        select:
-          screening_week: 3
-          qc: "TRUE"
-      symp:
-        metadata: "results/data/community/metadata.tsv"
-        sequences: "lapis"
-        select:
-          army_dem: "TRUE"
-          dateFrom: "2021-02-08"
-          # dateTo: "2021-02-14"
-          qc: "TRUE"
-        subsample:
-          n: 11 #"deme-balanced"
-          method: "random"
-
-  asymp_all:
-    asymp: 
-      metadata: "results/data/screening/metadata.tsv"
-      sequences: "lapis"
-      select:
-        qc: "TRUE"
-    symp: "tbd"
-
-  asymp_armydem:
-    asymp:
-      metadata: "results/data/screening/metadata.tsv"
-      sequences: "lapis"
-      select:
-        qc: "TRUE"
-    symp: "tbd"
+  # covid_lapis:
+  #   # replicates: 2
+  #   metadata: "lapis"
+  #   sequences: "lapis"
+  #   select:
+  #     country: "Switzerland"
+  #     dateFrom: "2021-01-01"
+  #     dateTo: "2021-01-15"
+    # subsample:
+    #   n: 20 #TODO "deme-balanced"
+    #   method: "random"
 
 
   # dataset1_lapis: 
@@ -213,10 +37,6 @@ datasets:
   #         nextcladeQcMissingDataScoreTo: 300
   #         dateFrom: ""
   #         dateTo: ""
-    
-    
-
-
         
   # dataset1: 
   #   select: "all"      

@@ -1,52 +1,23 @@
-# analyses:
+analyses:
   
-#   iqtree:
-    
-#     all_bb1000:
-#       dataset: ["sw_community", "sw_armydem", "sw_armydem_ns", "sw_community_ns", "armydem_community", "armydem_community_ns", "armydem_community_s2"]
-#       tree_args: " -m GTR -ninit 50 -bb 1000 -wbtl -redo"
-#       outgroup_file: "resources/reference.fasta"
-#       outgroup: "MN908947|2019-12-26"
-  
+  # analysis_tool1:
+  #   analysis_name1:
+  #     arg1: "value"
+  #     arg2: "value"
 
-#   bats:
-    
-#     all_deme:
-#       dataset: ["sw_community", "sw_armydem", "sw_armydem_ns", "sw_community_ns", "armydem_community", "armydem_community_ns", "armydem_community_s2"]
-#       trait: "deme"
-#       n: 2
-#       jar: "~/Tools/BaTS_beta/befi-BaTS_0-2.jar"
-#       permutations: 100
-  
+  #   analysis_name2:
+  #     arg1: "value"
+  #     arg2: "value"
 
-#   beast:
-    
-#     asymp_symp_d10:
-#       dataset: "sw_armydem"
-#       command: "beast" # or "java -jar resources/myjar.jar"
-#       action: "overwrite" # or "resume"
-#       time: 7200
-#       mem_mb: 4096
-#       threads: 10
-#       burnin: 10
-#       replicates: 2
-#       xml: "resources/beast_xml/example.xml"
-#       xml_params:
-#         length: 10000000
-#         log_every: 1000
-#         death_rate: 36.5
-    
-#     asymp_symp_d5::
-#       dataset: "sw_armydem"
-#       command: "beast" # or "java -jar resources/myjar.jar"
-#       action: "overwrite" # or "resume"
-#       time: 7200
-#       mem_mb: 4096
-#       threads: 10
-#       burnin: 10
-#       replicates: 2
-#       xml: "resources/beast_xml/example.xml"
-#       xml_params:
-#         length: 10000000
-#         log_every: 1000
-#         death_rate: 73
+  beast:
+    intro:
+      xml: "resources/beast_xml/primate-mtDNA.xml"
+      command: "beast"
+      action: ""
+      time: 7200
+      mem_mb: 4096
+      threads: 10
+      burnin: 10
+      chains: 2
+
+

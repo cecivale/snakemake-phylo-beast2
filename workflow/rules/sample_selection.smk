@@ -9,11 +9,15 @@
 # -----------------------------------------------------------------------------------
 
 
+rule load_metadata;
+        """
+        Save metadata file or create it from seqs ids.
+        """
 
 rule select_samples:
     message:
         """
-        Load metadata file.
+        Load metadata file and select samples based on config.
         """
     input: 
         metadata = _get_metadata_file 

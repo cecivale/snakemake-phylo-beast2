@@ -31,7 +31,9 @@ localrules: all, clean
 wildcard_constraints:
     dataset="[A-Za-z0-9_]+",
     analysis="[A-Za-z0-9_]+",
+    output="[A-Za-z]+",
     sufix="[0-9.]+",
+    i="[0-9]"
 
 # Final output files
 all_files = []
@@ -39,7 +41,7 @@ METHODS = config["run"].keys()
 for method in METHODS:
     ANALYSES = config["run"][method].keys()
     for analysis in ANALYSES:
-        DATASETS = config["run"][method][analysis]
+        DATASETS = config["run"][method][analysis] # Include dataset define in analysis
         for dataset in DATASETS:
             DATA_SEED = ["." + str(i) for i in range(0, config["datasets"][dataset].get("replicates", 0))] or ""
             FILE_TYPE = config["target_files"][method]
@@ -96,6 +98,6 @@ if config["preprocessing"]["mask"]:
 
 include: "rules/phylogenetics.smk"
 include: "rules/phylodynamics.smk"
+ruleorder: beast > aggregate_runs 
 ruleorder: beast > combine_chains 
-
 # TODO change from shell directive to script so they are accessible from module definition

@@ -37,16 +37,23 @@ if __name__ == '__main__':
         print(query)
         metadata = metadata.query(query)
     
-    ids = metadata[[snakemake.params["seq_id"]]]
-    if snakemake.params["deme"] is not None: 
-        ids[["deme"]] = snakemake.params["deme"] 
-
+    ids = pd.DataFrame()
     if "sample_id" in metadata:
         ids["sample_id"] = metadata["sample_id"]
     elif snakemake.params["deme"] is not None:
         ids["sample_id"] = metadata["seq_id"] + "|" + snakemake.params["deme"] + "|" + metadata["date"]
     else:
         ids["sample_id"] = metadata["seq_id"] + "|" + metadata["date"]
+
+    ids["date"] = metadata["date"]
+    ids[snakemake.params["seq_id"]] = metadata[[snakemake.params["seq_id"]]]
+
+    if snakemake.params["deme"] is not None: 
+        ids[["deme"]] = snakemake.params["deme"] 
+
+    
+
+
 
 
     ids.to_csv(snakemake.output["ids"], index = False, sep="\t")
