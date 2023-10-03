@@ -13,12 +13,14 @@ checkpoint beast:
     params:
         beast_command = lambda wildcards: _get_analysis_param(wildcards, "beast", "command"), 
         action = lambda wildcards: _get_analysis_param(wildcards, "beast", "action"),
-        user_check = lambda wildcards: _get_analysis_param(wildcards, "beast", "user_check"),,
+        user_check = lambda wildcards: _get_analysis_param(wildcards, "beast", "user_check"),
         xml_params = lambda wildcards: str(_get_analysis_param(wildcards, "beast", "xml_params")).replace(":", "=").replace(
             "{", "\"").replace("}", "\"").replace(" ", "").replace("'", ""),
         # mrs = lambda wildcards: _get_mrs(wildcards),
         folder_name = "results/analysis/beast/{analysis}/chains",
         file_name = "{dataset}{sufix,.*}.{chain}.r{i}",
+        state_file = "{dataset}{sufix,.*}.{chain}.state",
+        previous_file_name = lambda wildcards: wildcards.dataset + wildcards.sufix + "." + wildcards.chain + ".r" + str(int(wildcards.i) - 1) if wildcards.i != 0 else wildcards.dataset + wildcards.sufix + wildcards.chain + ".r{i}"
     log:
         "logs/beast_{analysis}_{dataset}_{sufix,.*}_{chain}.r{i}.txt"
     benchmark:
@@ -32,34 +34,43 @@ checkpoint beast:
         """
         mkdir -p {params.folder_name}/running
         
-        if [ {params.action} == "resume" ] || [ -f {output.is_converged} -a  $(< {output.is_converged})=="NO" ]; then
-            ACTION="resume"
+        if [ {wildcards.i} == 0 ]; then
+            
+            if [ {params.action} == "resume" ]; then
+                ACTION="resume"
+            else
+                ACTION="overwrite"
+            fi
+            
         else
-            ACTION="overwrite"
+            ACTION="resume"
+            scp {params.folder_name}/{params.previous_file_name}.log {params.folder_name}/running/{params.file_name}.log 
+            scp {params.folder_name}/{params.previous_file_name}.trees {params.folder_name}/running/{params.file_name}.trees
+
+            rm {params.folder_name}/{params.previous_file_name}.log {params.folder_name}/{params.previous_file_name}.trees {params.folder_name}/is_converged_{params.previous_file_name}.txt
         fi
-        
+
+        # TODO Add message to only run user check for several chains and analyses in cluster with parallel job submission
+
         if [ {params.user_check} == True ]; then
             echo NO > {output.is_converged}
         else
             echo YES > {output.is_converged}
         fi
-    
+
         {params.beast_command} \
             -D aligned_fasta={input.alignment} \
             -D {params.xml_params} \
             -D file_name={params.folder_name}/running/{params.file_name} \
             -seed {wildcards.chain} \
-            -statefile "{params.folder_name}/{params.file_name}.state" \
+            -statefile "{params.folder_name}/{params.state_file}" \
             -$ACTION {input.xml} 2>&1 | tee -a {log}
         
         # We need the chains to be written in a different path than snakemake output so snakemake does not delete them if job fails
         # So we moved them once they are finished
         [ -f {params.folder_name}/running/{params.file_name}.log ] && mv {params.folder_name}/running/{params.file_name}.log {output.trace}
         [ -f {params.folder_name}/running/{params.file_name}.trees ] && mv {params.folder_name}/running/{params.file_name}.trees {output.trees} 
-
         """
-
-
 
 runs = 0
 def _is_converged(wildcards):
@@ -70,7 +81,8 @@ def _is_converged(wildcards):
         chain = wildcards.chain, i = runs).output.is_converged.open() as f:
         s = f.read().strip()
         if s == "YES":
-            return expand("results/analysis/beast/{{analysis}}/chains/{{dataset}}{{sufix,.*}}.{{chain}}.r{i}.{{output}}", i = range(0, runs+1))
+            # return expand("results/analysis/beast/{{analysis}}/chains/{{dataset}}{{sufix,.*}}.{{chain}}.r{i}.{{output}}", i = range(0, runs+1))
+            return "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r" + str(runs) + ".{output}"
         elif s == "NO":
             runs += 1
             checkpoints.beast.get(analysis = wildcards.analysis, dataset = wildcards.dataset, 
@@ -78,17 +90,28 @@ def _is_converged(wildcards):
         chain = wildcards.chain, i = runs)
 
 
+# rule aggregate_runs:
+#     input:
+#         runs = _is_converged 
+#     output:
+#         combined_run = "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
+#     params:
+#         input_command = lambda wildcards, input: " -log ".join(input.runs)
+#     shell:
+#         """
+#         logcombiner -log {params.input_command} -o {output.combined_run} 2>&1 | tee -a {log}
+#         """
+
 rule aggregate_runs:
     input:
-        runs = _is_converged 
+        run = _is_converged 
     output:
-        combined_run = "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
-    params:
-        input_command = lambda wildcards, input: " -log ".join(input.runs)
+        chain = "results/analysis/beast/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
     shell:
         """
-        logcombiner -log {params.input_command} -o {output.combined_run} 2>&1 | tee -a {log}
+        mv {input.run} {output.chain} 2>&1 | tee -a {log}
         """
+
 def _get_chains(wildcards):
     files = expand(
         "results/analysis/beast/{{analysis}}/chains/{{dataset}}{{sufix,.*}}.{chain}.{{output}}",
