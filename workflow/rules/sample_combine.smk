@@ -1,7 +1,7 @@
 rule combine_samples:
     message:
         """
-        Combine sequences metadata from demes.
+        Combine sequences ids from demes.
         """
     input:
         ids = _get_ids_to_combine

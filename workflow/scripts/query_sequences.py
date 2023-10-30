@@ -27,14 +27,15 @@ if __name__ == '__main__':
     ids = pd.read_csv(snakemake.input["ids"], sep = "\t", dtype = "str")
 
     with open(snakemake.output["sequences"], "w") as output:
-        seq_format = get_seq_format(snakemake.input["sequences"])
-        sequences = SeqIO.parse(snakemake.input["sequences"], seq_format)
-        for seq in sequences:
-            id = seq.id
-            if ids['seq_id'].str.contains(id).any():
-                seq.id = ids.query("seq_id=='" + id + "'")["sample_id"].item()
-                seq.description = ""
-                SeqIO.write(seq, output, 'fasta')
+        for seq_file in snakemake.input["sequences"]:
+            seq_format = get_seq_format(seq_file)
+            sequences = SeqIO.parse(seq_file, seq_format)
+            for seq in sequences:
+                id = seq.id
+                if ids['seq_id'].str.contains(id).any():
+                    seq.id = ids.query("seq_id=='" + id + "'")["sample_id"].item()
+                    seq.description = ""
+                    SeqIO.write(seq, output, 'fasta')
 
 
 

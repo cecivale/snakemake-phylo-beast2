@@ -5,7 +5,7 @@ rule select_sequences:
         """
     input:
         ids = _get_sequence_ids,
-        sequences = _get_sequences_file
+        sequences = _get_all_sequences_file
     output:
         sequences = "results/data/{dataset}/sequences{sufix,.*}.fasta"
     log:

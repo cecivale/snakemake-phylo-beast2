@@ -9,28 +9,16 @@
 # -----------------------------------------------------------------------------------
 
 
-rule load_metadata:
-    message:
-        """
-        Save metadata file or create it from seqs ids.
-        """
-    params:
-        metadata = _get_metadata_file,
-        sequences = _get_sequences_file
-    output:
-        metadata = "results/data/{dataset}/{prefix,.*}metadata.tsv"
-    script:
-        "../scripts/load_metadata.py"
-
-
 rule select_samples:
     message:
         """
         Load metadata file and select samples based on config.
         """
     input: 
-        metadata = rules.load_metadata.output.metadata 
+        metadata = _get_metadata_file,
+        sequences = _get_sequences_file
     output:
+        metadata = "results/data/{dataset}/{prefix,.*}metadata.tsv",
         ids = "results/data/{dataset}/{prefix,.*}ids.tsv",
     params:
         select = _get_select_params,

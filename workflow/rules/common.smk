@@ -80,6 +80,18 @@ def  _get_all_metadata_files(wildcards):
 def  _get_sequences_file(wildcards):
     return _get_dataset_param("sequences", wildcards)
 
+def  _get_all_sequences_file(wildcards):
+    if _is_structured(wildcards):
+        demes = config["datasets"][wildcards.dataset]["structure"].keys()
+        sequences_files = []
+        for deme in demes:
+            sequences = config["datasets"][wildcards.dataset]["structure"][deme].get("sequences")
+            if sequences not in sequences_files:
+                sequences_files.append(sequences)
+        return sequences_files
+    else:
+        return [_get_dataset_param("sequences", wildcards)]
+
 
 def  _get_select_params(wildcards):
     return _get_dataset_param("select", wildcards)
@@ -103,7 +115,7 @@ def _get_analysis_param(wildcards, method, param):
     return config["analyses"][method][wildcards.analysis].get(param)
 
 def  _get_dataset_param(param, wildcards):
-    if _is_structured(wildcards):
+    if _is_structured(wildcards) and wildcards.get("prefix") is not None:
         return config["datasets"][wildcards.dataset]["structure"][wildcards.prefix[0:-1]].get(param)
     else:
         return config["datasets"][wildcards.dataset].get(param)
