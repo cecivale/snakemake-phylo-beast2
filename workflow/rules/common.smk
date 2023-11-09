@@ -35,18 +35,6 @@ def _get_ids_to_combine(wildcards):
         return files
     return "results/data/{dataset}/ids.tsv"
 
-# def  _get_sequence_ids(wildcards):
-#     data_dir = "results/data/{dataset}/"
-#     if _is_subsampled(wildcards) and _is_structured(wildcards):
-#         return data_dir + "ids_combined{sufix}.tsv"
-#     if _is_subsampled(wildcards):
-#         return data_dir + "ids_subsampled{sufix}.tsv"
-#     if _is_structured(wildcards):
-#         return data_dir + "ids_combined.tsv"
-#     if _is_filtered(wildcards):
-#         return data_dir + "ids_filtered.tsv"
-#     else:
-#         return data_dir + "ids.tsv"
 
 def  _get_sequence_ids(wildcards):
     data_dir = "results/data/" + wildcards.dataset + "/"
@@ -96,9 +84,9 @@ def  _get_all_sequences_file(wildcards):
 def  _get_select_params(wildcards):
     return _get_dataset_param("select", wildcards)
 
-# def  _get_seq_id(wildcards):
-#     seq_id = _get_dataset_param("seq_id", wildcards) or config["lapis"]["seq_id"]
-#     return seq_id
+def  _get_seq_id(wildcards):
+    seq_id = _get_dataset_param("seq_id", wildcards) or config["lapis"]["seq_id"]
+    return seq_id
 
 def _get_deme(wildcards):
     if _is_structured(wildcards):
@@ -111,8 +99,11 @@ def _get_seed(wildcards):
     # Returns data seed if several replicates or 1
     return wildcards.sufix[1:] or 1
 
-def _get_analysis_param(wildcards, method, param):
-    return config["analyses"][method][wildcards.analysis].get(param)
+def _get_analysis_param(wildcards, param):
+    return config["analyses"][wildcards.analysis].get(param, config["analyses"].get(param))
+
+def _get_run_param(wildcards, param):
+    return config["run"][wildcards.analysis].get(param, config["run"].get(param))
 
 def  _get_dataset_param(param, wildcards):
     if _is_structured(wildcards) and wildcards.get("prefix") is not None:
