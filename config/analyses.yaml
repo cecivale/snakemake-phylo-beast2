@@ -1,16 +1,26 @@
 analyses:
   
-  beast:
-    intro:
-      xml: "resources/beast_xml/primate-mtDNA.xml"
-      command: "beast"
-      action: "overwrite"
-      user_check: TRUE
-      time: 7200
-      mem_mb: 4096
-      threads: 10
-      burnin: 10
-      chains: 2
+  intro:
+    xml: "resources/beast_xml/primate-mtDNA.xml"
+    command: "beast"
+    action: "overwrite"
+    user_check: TRUE
+    time: 7200
+    mem_mb: 4096
+    threads: 1
+    burnin: 10
+    chains: 2
+
+  intro_bis:
+    xml: "resources/beast_xml/primate-mtDNA.xml"
+    command: "beast"
+    action: "overwrite"
+    user_check: TRUE
+    time: 7200
+    mem_mb: 4096
+    threads: 1
+    burnin: 10
+    chains: 1
 
 # Format example
   # analysis_tool1:

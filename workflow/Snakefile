@@ -9,6 +9,7 @@
 
 
 import urllib, json
+import glob
 import pandas as pd
 import numpy as np
 from snakemake.utils import validate, min_version
@@ -32,24 +33,24 @@ wildcard_constraints:
     dataset="[A-Za-z0-9_]+",
     analysis="[A-Za-z0-9_]+",
     output="[A-Za-z]+",
-    sufix="[.][0-9]",
+    sufix="[.][0-9]|[^$]",
     i="[0-9]",
     dseed="[0-9]",
     chain="[0-9]"
 
 # Final output files
 all_files = []
-METHODS = config["run"].keys()
-for method in METHODS:
-    ANALYSES = config["run"][method].keys()
-    for analysis in ANALYSES:
-        DATASETS = config["run"][method][analysis] # Include dataset define in analysis
-        for dataset in DATASETS:
-            DATA_SEED = ["." + str(i) for i in range(0, config["datasets"][dataset].get("replicates", 0))] or ""
-            FILE_TYPE = config["target_files"][method]
-            files = expand("results/analysis/" + method + "/" + analysis + "/" + dataset + "{dseed}.{filetype}", 
-                dseed = DATA_SEED, filetype = FILE_TYPE)
-            all_files += files
+# METHODS = config["run"].keys()
+# for method in METHODS:
+ANALYSES = config["run"].keys()
+for analysis in ANALYSES:
+    DATASETS = config["run"][analysis].get("dataset") # Include dataset define in analysis
+    for dataset in DATASETS:
+        DATA_SEED = ["." + str(i) for i in range(0, config["datasets"][dataset].get("replicates", 0))] or ""
+        FILE_TYPE = config["target_files"]
+        files = expand("results/analysis/" + analysis + "/" + dataset + "{dseed}.{filetype}", 
+            dseed = DATA_SEED, filetype = FILE_TYPE)
+        all_files += files
 
 
 rule all:

@@ -2,8 +2,60 @@ datasets:
   primates:
     # replicates: 2
     sequences: "resources/data/primate-mtDNA.nex"
+    metadata:  "resources/data/primate-mtDNA.nex"
     aligned: TRUE
     # subsample:
     #   n: 5 
     #   method: "random"
 
+  example:
+    metadata: "lapis"
+    sequences: "lapis"
+    select: 
+      country: "Switzerland"
+      nextcladeQcMissingDataScoreFrom: 0
+      nextcladeQcMissingDataScoreTo: 10
+      variantQuery: "B.1.1.7*"
+      dateFrom: "2021-01-01"
+      dateTo: "2021-01-01"
+
+  example_structured:
+    structure:
+      deme1:
+        metadata: "lapis"
+        sequences: "lapis"
+        select: 
+          country: "Switzerland"
+          nextcladeQcMissingDataScoreFrom: 0
+          nextcladeQcMissingDataScoreTo: 10
+          variantQuery: "B.1.1.7*"
+          dateFrom: "2021-01-01"
+          dateTo: "2021-01-01"
+          
+      deme2:
+        metadata: "lapis"
+        sequences: "lapis"
+        select: 
+          country: "Switzerland"
+          nextcladeQcMissingDataScoreFrom: 0
+          nextcladeQcMissingDataScoreTo: 10
+          variantQuery: "B.1.1.7*"
+          dateFrom: "2021-01-02"
+          dateTo: "2021-01-02"
+
+
+
+  primates_structured:
+    # replicates: 2
+    aligned: TRUE
+    structure:
+      prim1:
+        sequences: "resources/data/primate-mtDNA.nex"
+        metadata:  "resources/data/primate-mtDNA.nex"
+      prim2:
+        sequences: "resources/data/primate-mtDNA.nex"
+        metadata:  "resources/data/primate-mtDNA.nex"
+
+    # subsample:
+    #   n: 5 
+    #   method: "random"
