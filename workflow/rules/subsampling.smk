@@ -15,7 +15,7 @@ rule subsample:
         """
     input:
         ids = _get_ids_to_subsample,
-        metadata = rules.load_metadata.output.metadata 
+        metadata = "results/data/{dataset}/{prefix,.*}metadata.tsv",
     output:
         ids = "results/data/{dataset}/{prefix,.*}ids_subsampled.{dseed}.tsv"
     params:

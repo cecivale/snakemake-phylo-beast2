@@ -16,13 +16,13 @@ rule select_samples:
         """
     input: 
         metadata = _get_metadata_file,
-        sequences = _get_sequences_file
     output:
         metadata = "results/data/{dataset}/{prefix,.*}metadata.tsv",
         ids = "results/data/{dataset}/{prefix,.*}ids.tsv",
     params:
+        sequences = _get_sequences_file,
         select = _get_select_params,
-        # seq_id = _get_seq_id,
+        seq_id = _get_seq_id,
         deme = _get_deme
     # log:
     #     "logs/select_samples_{dataset}" + "{prefix,.*}"[0:-1] +".txt"

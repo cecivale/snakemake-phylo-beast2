@@ -11,7 +11,7 @@
 
 run: 
   intro:
-    dataset: ["primates"]
+    dataset: ["example"]
     action: "resume"
     user_check: FALSE
 
@@ -29,9 +29,6 @@ target_files: ["log", "trees"]
 #   beast: ["log", "trees"]
 
 
-# ------------- WIP
-
-
 lapis:
   seq_id: "genbankAccession" 
   database: "open" # gisaid or open
@@ -40,10 +37,16 @@ lapis:
 # # align:
 # #   parameters:
 
-# mask:
-#   mask_from_beginning: 100
-#   mask_from_end: 200
-#   mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
+mask:
+  mask_from_beginning: 100
+  mask_from_end: 200
+  mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
+
+beast:
+  time: 7200
+  mem_mb: 4096
+  threads: 10
+  burnin: 10
 
 # output:
 #   plot_dataset: true
@@ -57,18 +60,3 @@ lapis:
   # add config file for plotting output
   # check ess of chains already combined, user defined burnin or try different values automatically to maximize ess
   # use ugne's feast class to random initialize the parameters
-
-# run: 
-#   # tool:
-#     # analysis1: 
-#     #   - "dataset1"
-#     #   - "dataset2"
-#     # analysis2:
-#     #   - "dataset2"
-#   beast:
-#     intro:
-#     - "primates"
-
-#     intro_bis:
-#     - "example_structured"
-

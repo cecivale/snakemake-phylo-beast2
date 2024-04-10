@@ -42,10 +42,10 @@ def get_seq_format(seq_file):
 
 if __name__ == '__main__':
 
-    if snakemake.input["metadata"] == snakemake.input["sequences"]:
-        seq_format = get_seq_format(snakemake.input["sequences"])
+    if snakemake.input["metadata"] == snakemake.params["sequences"]:
+        seq_format = get_seq_format(snakemake.params["sequences"])
         seq_ids = []
-        for seq in SeqIO.parse(snakemake.input["sequences"], seq_format):
+        for seq in SeqIO.parse(snakemake.params["sequences"], seq_format):
             seq_ids.append(seq.id)
         metadata = pd.DataFrame({"sample_id" : seq_ids, "seq_id" : seq_ids  })
     else:
@@ -74,9 +74,12 @@ if __name__ == '__main__':
        
         if "date" in metadata:
             ids["date"] = metadata["date"]
-        # ids[snakemake.params["seq_id"]] = metadata[[snakemake.params["seq_id"]]]
         if "seq_id" in metadata:
             ids["seq_id"] = metadata["seq_id"]
+        else:
+            ids["seq_id"] = metadata[[snakemake.params["seq_id"]]]
+        if "strain" in metadata:
+            ids["strain"] = metadata["strain"]
         if snakemake.params["deme"] is not None: 
             ids[["deme"]] = snakemake.params["deme"] 
 

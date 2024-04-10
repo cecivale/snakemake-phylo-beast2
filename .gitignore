@@ -1,6 +1,7 @@
 .gitignore
 results/**
 resources/**
+benchmarks/**
 logs/**
 .snakemake
 .snakemake/**

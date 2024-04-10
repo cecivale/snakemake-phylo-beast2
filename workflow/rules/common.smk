@@ -100,7 +100,7 @@ def _get_seed(wildcards):
     return wildcards.sufix[1:] or 1
 
 def _get_analysis_param(wildcards, param):
-    return config["analyses"][wildcards.analysis].get(param, config["analyses"].get(param))
+    return config["analyses"][wildcards.analysis].get(param, config["beast"].get(param))
 
 def _get_run_param(wildcards, param):
     return config["run"][wildcards.analysis].get(param, config["run"].get(param))

@@ -32,7 +32,7 @@ localrules: all, clean
 wildcard_constraints:
     dataset="[A-Za-z0-9_]+",
     analysis="[A-Za-z0-9_]+",
-    output="[A-Za-z]+",
+    output="log|trees",
     sufix="[.][0-9]|[^$]",
     i="[0-9]",
     dseed="[0-9]",
@@ -93,11 +93,12 @@ use rule load_sequences from lapis_import as lapis_import_sequences with:
 ruleorder: select_samples > lapis_select_samples 
 ruleorder: align > lapis_import_sequences 
 
+include: "rules/mask.smk"
 
 # if config["preprocessing"]["mask"]:
 #         include: "rules/mask.smk"
 
-include: "rules/phylogenetics.smk"
+# include: "rules/phylogenetics.smk"
 include: "rules/phylodynamics.smk"
 ruleorder: beast > aggregate_runs 
 ruleorder: beast > combine_chains 

@@ -14,7 +14,7 @@ library(treedataverse)
 library(ggsci)
 library(scales)
 
-tree_file <- "/Users/ceciliav/Projects/2105-cov-armee/8.final-analysis/results/analysis/iqtree/asymp_symp_phylogenetics/sw_community.0.treefile"
+tree_file <- "/Users/ceciliav/Projects/2105-cov-armee/8.final-analysis/results/analysis/old/iqtree/asymp_symp_phylogenetics/asymp_armydem.1.treefile"
 #tree_file <- "/Users/ceciliav/Projects/2105-cov-armee/8.final-analysis/results/analysis/old/iqtree/asymp_symp_phylogenetics/sw_community_ns.treefile"
 tree_file <- snakemake@input[["tree"]]
 tree_ref <- treeio::read.tree(tree_file)
@@ -40,16 +40,17 @@ d <- as_tibble(tree) %>% left_join(metadata, by = c("label" = "sample_id")) %>%
                              altersjahr > 60 ~ "+60"))
 
 col_deme <-  c("#ffd900", "#ffa600", "#1464b5")
+col_deme <-  c("black", "black", "#00A1FF")
 names(col_deme) <- c("symp", "symp_armydem", "asymp")
 
-p <- ggtree(as.treedata(d), size = 0.4, aes(color = cat))  +
+p <- ggtree(as.treedata(d), size = 0.4, color="grey60")  +# aes(color = cat))  +
             #aes(color =  pangoLineage == "B.1.160.16"))  +
-  geom_tippoint(aes(color = cat), size = 0.5) +
-  geom_nodepoint(aes(subset = as.numeric(label) >= 95, size = as.numeric(label), alpha = as.numeric(label)), shape = 15, color = "grey30") +
+  geom_tippoint(aes(color = cat), size = 1, alpha = 0.8) +
+  geom_nodepoint(aes(subset = as.numeric(label) >= 95),shape = 15, size=0.8, color = "grey30") +
   scale_size_continuous(range = c(0, 2), name = "bootstrap") +
   scale_alpha(name = "bootstrap") +
   scale_color_manual(values = col_deme, na.value = "grey30") +
-  geom_treescale(x = 0, y = 220, label = "subs/site", fontsize = 3) 
+  geom_treescale(x = 0, y = 150, label = "subs/site", fontsize = 3) 
 
 ann <- d %>% filter(!is.na(deme)) %>% 
   mutate(screening_week = case_when(isoweek(date) == 2 ~ 1,
@@ -57,10 +58,13 @@ ann <- d %>% filter(!is.na(deme)) %>%
                                     isoweek(date) == 6 ~ 3,
                                     TRUE ~ 3),
          sex = ifelse(is.na(sex) & deme == "asymp", "Männlich", sex)) %>%
-  select(label, cat, screening_week, division, kanton, altersjahr, 
-         age_cat, sex, 
+  # select(label, cat, screening_week, division, kanton, altersjahr, 
+  #        age_cat, sex, 
+  #        ct, nextstrainClade, 
+  #        ) %>%
+  select(label, cat, division, altersjahr, 
          ct, nextstrainClade, 
-         ) %>%
+  ) %>%
   column_to_rownames("label")
 
 
@@ -89,12 +93,12 @@ col_clade <- pal_aaas()(length(unique(ann$nextstrainClade)))
 names(col_clade) <- unique(ann$nextstrainClade)
 
 my_colors <- c(col_deme,
-               col_week,
+               #col_week,
                col_div,
-               col_kanton,
+               #col_kanton,
                col_age,
-               col_age_cat,
-               col_sex,
+               #col_age_cat,
+               #col_sex,
                col_ct,
                col_clade
             )
@@ -132,3 +136,14 @@ ggsave(ph, filename = snakemake@output[["fig"]], width = 297, heigh = 210, units
 #   mutate(clade = (label %in% c$label)) %>%
 #   ggplot() +
 #   geom_violin(aes(x = altersjahr, y = clade))
+
+
+ggtree(as.treedata(d), size = 0.4, color = "grey60")  +
+  #aes(color =  pangoLineage == "B.1.160.16"))  +
+  geom_tippoint(aes(color = cat), size = 3, alpha = 0.9) +
+  geom_nodepoint(aes(subset = as.numeric(label) >= 95, alpha = as.numeric(label)), shape = 15, color = "grey30") +
+  scale_alpha(name = "bootstrap") +
+  scale_color_manual(values = c(symp = "#4B5938", asymp="#BDBC86"), na.value = "grey30") +
+  geom_treescale(label = "subs/site", fontsize = 3) +
+  theme(legend.position = "none")
+
