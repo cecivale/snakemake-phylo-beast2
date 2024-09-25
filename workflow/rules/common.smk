@@ -35,6 +35,11 @@ def _get_ids_to_combine(wildcards):
         return files
     return "results/data/{dataset}/ids.tsv"
 
+def _get_alignment(wildcards):
+    if _get_dataset_param("mask", wildcards):
+        return "results/data/{dataset}/masked{sufix,.*}.fasta",
+    else:
+        return "results/data/{dataset}/aligned{sufix,.*}.fasta",
 
 def  _get_sequence_ids(wildcards):
     data_dir = "results/data/" + wildcards.dataset + "/"
@@ -107,7 +112,7 @@ def _get_run_param(wildcards, param):
 
 def  _get_dataset_param(param, wildcards):
     if _is_structured(wildcards) and wildcards.get("prefix") is not None:
-        return config["datasets"][wildcards.dataset]["structure"][wildcards.prefix[0:-1]].get(param)
+        return config["datasets"][wildcards.dataset]["structure"][wildcards.prefix[0:-1]].get(param, config["datasets"][wildcards.dataset].get(param))
     else:
         return config["datasets"][wildcards.dataset].get(param)
 

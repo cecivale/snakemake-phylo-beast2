@@ -40,8 +40,6 @@ wildcard_constraints:
 
 # Final output files
 all_files = []
-# METHODS = config["run"].keys()
-# for method in METHODS:
 ANALYSES = config["run"].keys()
 for analysis in ANALYSES:
     DATASETS = config["run"][analysis].get("dataset") # Include dataset define in analysis
@@ -76,8 +74,8 @@ include: "rules/sequence_selection.smk"
 include: "rules/alignment.smk"
 
 module lapis_import:
-    # snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
-    snakefile: "/Users/ceciliav/Tools/talking-to-LAPIS/python-snakemake/workflow/Snakefile"
+    # TODO, not working snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
+    snakefile: "talking-to-LAPIS/python-snakemake/workflow/Snakefile"
     config: config
 
 use rule load_metadata from lapis_import as lapis_select_samples
@@ -95,12 +93,7 @@ ruleorder: align > lapis_import_sequences
 
 include: "rules/mask.smk"
 
-# if config["preprocessing"]["mask"]:
-#         include: "rules/mask.smk"
-
-# include: "rules/phylogenetics.smk"
 include: "rules/phylodynamics.smk"
 ruleorder: beast > aggregate_runs 
 ruleorder: beast > combine_chains 
 ruleorder: aggregate_runs > combine_chains 
-# # TODO change from shell directive to script so they are accessible from module definition

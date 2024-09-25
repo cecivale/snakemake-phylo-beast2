@@ -2,7 +2,8 @@
 
 checkpoint beast:
     input:
-        alignment = "results/data/{dataset}/masked{sufix,.*}.fasta",
+        # alignment = "results/data/{dataset}/masked{sufix,.*}.fasta",
+        alignment = lambda wildcards: _get_alignment(wildcards), 
         xml = lambda wildcards: _get_analysis_param(wildcards, "xml"),
         ids = lambda wildcards: _get_sequence_ids(wildcards)
     output:

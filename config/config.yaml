@@ -32,7 +32,7 @@ target_files: ["log", "trees"]
 lapis:
   seq_id: "genbankAccession" 
   database: "open" # gisaid or open
-  batch_size: 50
+  batch_size: 10
 
 # # align:
 # #   parameters:

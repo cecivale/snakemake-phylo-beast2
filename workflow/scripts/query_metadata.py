@@ -65,10 +65,13 @@ if __name__ == '__main__':
             ids["sample_id"] = metadata["sample_id"]
         elif "seq_id" in metadata and "date" in metadata and snakemake.params["deme"] is not None:
             ids["sample_id"] = metadata["seq_id"] + "|" + snakemake.params["deme"] + "|" + metadata["date"]
+            metadata["sample_id"] = metadata["seq_id"] + "|" + snakemake.params["deme"] + "|" + metadata["date"]
         elif "seq_id" in metadata and "date" in metadata:
             ids["sample_id"] = metadata["seq_id"] + "|" + metadata["date"]
+            metadata["sample_id"] = metadata["seq_id"] + "|" + metadata["date"]
         elif "seq_id" in metadata:
             ids["sample_id"] = metadata["seq_id"]
+            metadata["sample_id"] = metadata["seq_id"]
         else:
             print("Error: No sequence or sample id in metadata.")
        
@@ -82,6 +85,7 @@ if __name__ == '__main__':
             ids["strain"] = metadata["strain"]
         if snakemake.params["deme"] is not None: 
             ids[["deme"]] = snakemake.params["deme"] 
+            metadata[["deme"]] = snakemake.params["deme"] 
 
 
     metadata.to_csv(snakemake.output["metadata"], index = False, sep="\t")
