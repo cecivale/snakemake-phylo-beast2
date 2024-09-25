@@ -140,24 +140,42 @@ rule combine_chains:
         """
         logcombiner -log {params.input_command} -o {output.combined_chain} -b {params.burnin}  2>&1 | tee -a {log}
         """
+rule downsample_trees:
+    input:
+        trees =  "results/analysis/{analysis}/{dataset}{sufix}.trees"
+    output:
+        downsampled_trees =  "results/analysis/{analysis}/{dataset}{sufix}.ds.trees"
+    log:
+        "logs/downsample_trees_{analysis}_{dataset}{sufix}.txt"
+    params:
+        command = config["logcombiner"].get("command"),
+        resample = config["logcombiner"].get("resample"),
+        burnin = lambda wildcards: _get_analysis_param(wildcards, "burnin"), 
+    shell:
+       """
+        {params.command} -log {input.trees} -o {output.downsampled_trees} -b {params.burnin} -resample {params.resample}  2>&1 | tee {log}
+        """
 
-# rule mcc_tree:
-#     message: 
-#         """
-#         Summarize trees to Maximum clade credibility tree with median node heights with TreeAnnotator.
-#         """
-#     input:
-#         combined_trees = rules.combine_typedtrees.output.combined_typedtrees
-#     output:
-#         summary_tree = "results/{dataset}/beast/{analysis}/{subsampling}.{dseed}.comb.mcc.typed.node.tree"
-#     log:
-#         "logs/summarise_typedtrees_{dataset}_{analysis}_{subsampling}.{dseed}.txt"
-#     benchmark:
-#         "benchmarks/summarise_typedtree_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
-#     params:
-#         burnin = 0,
-#         heights = "median"
-#     shell:
-#         """
-#         treeannotator -heights {params.heights} -b {params.burnin} -lowMem {input.combined_trees} {output.summary_tree} 2>&1 | tee -a {log} 
-#         """
+rule summarize_trees:
+    message: 
+        """
+        Summarize trees to {wildcards.topo} tree with median node heights with TreeAnnotator.
+        """
+    input:
+        trees = rules.downsample_trees.output.downsampled_trees
+    output:
+        summary_tree =  "results/analysis/{analysis}/{dataset}{sufix}.{topo}.tree"
+    log:
+        "logs/summarise_typedtrees_{dataset}_{analysis}_{sufix}_{topo}.txt"
+    benchmark:
+        "benchmarks/summarise_typedtree_{dataset}_{analysis}_{sufix}_{topo}.benchmark.txt"
+    params:
+        command = config["treeannotator"].get("command"),
+        burnin = 0,
+        heights = config["treeannotator"].get("heights"),
+        topology = lambda wildcards: wildcards.topo
+    shell:
+        """
+        {params.command} -topology {params.topology} -heights {params.heights} -b {params.burnin} -lowMem {input.trees} {output.summary_tree} 2>&1 | tee -a {log} 
+        """
+

@@ -23,19 +23,15 @@ run:
 config_datasets: "config/datasets.yaml"
 config_analyses: "config/analyses.yaml"
 
-target_files: ["log", "trees"]
-#   # iqtree: ["treefile", "png"]
-#   # treetime: ["nexus", "png"]
-#   beast: ["log", "trees"]
-
+target_files: ["log", "trees", "MCC.tree", "CCD0.tree"]
 
 lapis:
   seq_id: "genbankAccession" 
   database: "open" # gisaid or open
-  batch_size: 10
+  batch_size: 50
 
-# # align:
-# #   parameters:
+align:
+  parameters: 
 
 mask:
   mask_from_beginning: 100
@@ -43,20 +39,18 @@ mask:
   mask_sites: [21846, 21987, 22992, 23012, 23063, 23604, 24410]
 
 beast:
+  command: "beast"
+  user_check: FALSE
   time: 7200
   mem_mb: 4096
-  threads: 10
+  threads: 2
   burnin: 10
+  chains: 1
 
-# output:
-#   plot_dataset: true
-#   plot_tree: true
-#   check_ESS: true
-#   plot_parameters:
-#     - Re
-#     - ReAmongDemes
-#     - clockRate
-# check ESS, if passed MCC tree and parameter plots (user defined parameters)
-  # add config file for plotting output
-  # check ess of chains already combined, user defined burnin or try different values automatically to maximize ess
-  # use ugne's feast class to random initialize the parameters
+logcombiner:
+  command:  "logcombiner"
+  resample: 10000
+
+treeannotator:
+  command:  "treeannotator"
+  heights: "median"
