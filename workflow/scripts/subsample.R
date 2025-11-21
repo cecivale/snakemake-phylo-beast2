@@ -8,7 +8,8 @@
 # ------------------------------------------------------------------------------
 
 
-subsample <- function(ids_file, metadata_file, groups_file, grouping_var,
+subsample <- function(ids_file, metadata_file, 
+                      groups_file, grouping_var, weights_file,
                       include_file, exclude_file, 
                       n, method, weights, seed, 
                       output_file) {
@@ -16,20 +17,20 @@ subsample <- function(ids_file, metadata_file, groups_file, grouping_var,
   set.seed(seed)
   ids <- read_tsv(ids_file)
   df <- read_tsv(metadata_file) %>% 
-    filter(sample_id %in% ids$sample_id)
+    filter(sample_id %in% ids$sample_id | seq_id %in% ids$seq_id)
     
   # Include and exclude specific sequences by id
   if (!is.null(include_file)) {
     include <- read_lines(include_file)
-    include_df <- df %>% filter(sample_id %in% include)
+    include_df <- df %>% filter(sample_id %in% include | seq_id %in% include)
   } else include_df <- tibble()
   
   if (!is.null(exclude_file)) {
     exclude <- read_lines(exclude_file)
     df <- df %>%  
-      filter(!sample_id %in% exclude)
+      filter(!sample_id %in% exclude | !seq_id %in% exclude)
   }
-    
+  
   # Subsample
   
   if (method == "random") {
@@ -50,21 +51,19 @@ subsample <- function(ids_file, metadata_file, groups_file, grouping_var,
         sample_n(size = min(n(), n), replace = F)
     }
     
-  } else if (method == "uniform_week") {
-    # 3. Uniform in each week
-    df <- df %>% mutate(week = floor_date(date, "week", week_start = 1))
-    n_weeks <- nrow(df %>% count(week = floor_date(date, "week", week_start = 1)))
-    n_seq_week <- ceiling(n/n_weeks)
-    df_seq_week <- df %>% count(week) %>%
-      rowwise() %>%
-      mutate(n_subsample = min(n, n_seq_week)) %>%
-      right_join(df, by = "week")
-    subsample <- df_seq_week %>%
-      group_by(week) %>%
-      sample_n(size = min(n(), n_subsample), replace = F) %>%
-      ungroup()
+  } else if (method == "weights") {
+    # 3. Sample according to given weights
+    if (n >= nrow(df)) subsample <- df
+    else {
+      weights_specs <- read_tsv(weights_file)
+      subsample <- df %>%
+        left_join(weights_specs) %>%
+        replace_na(list(p = 0)) %>%
+        sample_n(size = min(n(), n), replace = F, weight = p)
+      }
     
-  } else if (n == -1) subsample <- df
+  } else if (n == -1) subsample <- df 
+    else if (n == 0) subsample <- df %>% slice(0)
     
   subsample <- bind_rows(subsample, include_df) %>%
     ungroup %>%
@@ -98,6 +97,7 @@ subsample_output <- subsample(ids_file = snakemake@input[["ids"]],
                               exclude_file = snakemake@params[["exclude"]],
                               groups_file = snakemake@input[["groups"]],
                               grouping_var =  snakemake@params[["grouping_var"]],
+                              weights_file = snakemake@input[["weights"]],
                               n = snakemake@params[["n"]],
                               method = snakemake@params[["method"]],
                               weights = snakemake@params[["weights"]],

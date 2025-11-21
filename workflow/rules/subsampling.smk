@@ -16,7 +16,8 @@ rule subsample:
     input:
         ids = _get_ids_to_subsample,
         metadata = "results/data/{dataset}/{prefix,.*}metadata.tsv",
-        groups =  lambda wildcards: expand("results/data/{{dataset}}/{{prefix,.*}}groups.tsv", proxy=[] if _get_subsampling_param("grouping_var", wildcards) == "groups" else [None])
+        groups =  lambda wildcards: expand("results/data/{{dataset}}/{{prefix,.*}}groups.tsv", proxy=[]) if _get_subsampling_param("method", wildcards) == "groups" else [],
+        weights =  lambda wildcards: expand("results/data/{{dataset}}/weights.tsv", proxy=[]) if _get_subsampling_param("method", wildcards) == "weights" else []
     output:
         ids = "results/data/{dataset}/{prefix,.*}ids_subsampled.{dseed}.tsv"
     params:

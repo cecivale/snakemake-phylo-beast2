@@ -11,14 +11,14 @@ rule align:
     output:
         alignment = "results/data/{dataset}/aligned{sufix,.*}.fasta"
     params:
-        already_aligned = lambda wildcards: _get_dataset_param("aligned", wildcards)
+        to_align = lambda wildcards: _get_dataset_param("align", wildcards)
     log:
         "logs/align_{dataset}_{sufix,.*}.txt"
     # conda:
     #     "envs/mafft.yaml"
     shell:
         """
-        if [ {params.already_aligned} == True ]; then
+        if [ {params.to_align} == False ]; then
             scp {input.sequences} {output.alignment}
             echo 'Sequences already aligned, skipping alignment step.'
         fi

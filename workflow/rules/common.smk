@@ -79,6 +79,7 @@ def  _get_all_sequences_file(wildcards):
         sequences_files = []
         for deme in demes:
             sequences = config["datasets"][wildcards.dataset]["structure"][deme].get("sequences")
+            if sequences is None: return [_get_dataset_param("sequences", wildcards)]
             if sequences not in sequences_files:
                 sequences_files.append(sequences)
         return sequences_files
@@ -123,7 +124,11 @@ def  _get_subsampling_param(param, wildcards):
         return config["datasets"][wildcards.dataset]["subsample"].get(param)
 
 def _get_mrs(wildcards):
-    ids = pd.read_csv(_get_sequence_ids(wildcards), sep = '\t')
+    path = _get_sequence_ids(wildcards)
+    if not os.path.exists(path):
+        return ""
+    ids = pd.read_csv(path, sep="\t")
     dates = ids['sample_id'].str.split("|", expand=True)[2]
     return max(dates)
+
 

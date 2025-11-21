@@ -82,19 +82,19 @@ def _is_converged(wildcards):
         dataset = wildcards.dataset,
         sufix = wildcards.sufix,
         chain = wildcards.chain)
-    trace = glob.glob(path[0] + "*.log")
+    trace = glob.glob(path[0] + "[0-9]." + wildcards.output)
     if len(trace) == 0:
         runs = 0
     else:
         start = ".r"
-        end = ".log"
+        end = "." + wildcards.output
         runs = int(trace[0][trace[0].find(start)+len(start):trace[0].find(end)])
 
     with checkpoints.beast.get(analysis = wildcards.analysis, dataset = wildcards.dataset, 
         sufix = wildcards.sufix, 
         chain = wildcards.chain, i = runs).output.is_converged.open() as f:
         s = f.read().strip()
-        print(s)
+
         if s == "YES":
             return "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r" + str(runs) + ".{output}"
         elif s == "NO":
@@ -109,6 +109,8 @@ rule aggregate_runs:
         run = _is_converged 
     output:
         chain = "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
+    log:
+        "logs/aggregate_runs_{analysis}_{dataset}_{sufix,.*}_{chain}_{output}.txt"
     shell:
         """
         mv {input.run} {output.chain} 2>&1 | tee -a {log}
@@ -140,20 +142,20 @@ rule combine_chains:
         """
         logcombiner -log {params.input_command} -o {output.combined_chain} -b {params.burnin}  2>&1 | tee -a {log}
         """
-rule downsample_trees:
+rule downsample_chains:
     input:
-        trees =  "results/analysis/{analysis}/{dataset}{sufix}.trees"
+        file =  "results/analysis/{analysis}/{dataset}{sufix}.{output}"
     output:
-        downsampled_trees =  "results/analysis/{analysis}/{dataset}{sufix}.ds.trees"
+        downsampled_file =  "results/analysis/{analysis}/{dataset}{sufix}.ds.{output}"
     log:
-        "logs/downsample_trees_{analysis}_{dataset}{sufix}.txt"
+        "logs/downsample_{output}_{analysis}_{dataset}{sufix}.txt"
     params:
         command = config["logcombiner"].get("command"),
         resample = config["logcombiner"].get("resample"),
         burnin = lambda wildcards: _get_analysis_param(wildcards, "burnin"), 
     shell:
        """
-        {params.command} -log {input.trees} -o {output.downsampled_trees} -b {params.burnin} -resample {params.resample}  2>&1 | tee {log}
+        {params.command} -log {input.file} -o {output.downsampled_file} -b {params.burnin} -resample {params.resample}  2>&1 | tee {log}
         """
 
 rule summarize_trees:
@@ -162,13 +164,13 @@ rule summarize_trees:
         Summarize trees to {wildcards.topo} tree with median node heights with TreeAnnotator.
         """
     input:
-        trees = rules.downsample_trees.output.downsampled_trees
+        trees = "results/analysis/{analysis}/{dataset}{sufix}.ds.trees"
     output:
         summary_tree =  "results/analysis/{analysis}/{dataset}{sufix}.{topo}.tree"
     log:
-        "logs/summarise_typedtrees_{dataset}_{analysis}_{sufix}_{topo}.txt"
+        "logs/summarise_trees_{dataset}_{analysis}_{sufix}_{topo}.txt"
     benchmark:
-        "benchmarks/summarise_typedtree_{dataset}_{analysis}_{sufix}_{topo}.benchmark.txt"
+        "benchmarks/summarise_tree_{dataset}_{analysis}_{sufix}_{topo}.benchmark.txt"
     params:
         command = config["treeannotator"].get("command"),
         burnin = 0,
@@ -176,6 +178,5 @@ rule summarize_trees:
         topology = lambda wildcards: wildcards.topo
     shell:
         """
-        {params.command} -topology {params.topology} -heights {params.heights} -b {params.burnin} -lowMem {input.trees} {output.summary_tree} 2>&1 | tee -a {log} 
+        {params.command} -topology {params.topology} -height {params.heights} -b {params.burnin} -lowMem -file {input.trees} {output.summary_tree} 2>&1 | tee -a {log} 
         """
-
