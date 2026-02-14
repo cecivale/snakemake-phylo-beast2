@@ -28,7 +28,7 @@ checkpoint beast:
         lambda wildcards: _get_analysis_param(wildcards, "threads"),
     resources:
         runtime = lambda wildcards: _get_analysis_param(wildcards, "time"),
-        mem_per_cpu = lambda wildcards: _get_analysis_param(wildcards,  "mem_mb")
+        mem_mb = lambda wildcards: _get_analysis_param(wildcards,  "mem_mb")
     shell:
         """
         mkdir -p {params.folder_name}/running
@@ -120,6 +120,30 @@ def _get_chains(wildcards):
     files = expand(
         "results/analysis/{{analysis}}/chains/{{dataset}}{{sufix,.*}}.{chain}.{{output}}",
         chain = range(1, _get_analysis_param(wildcards, "chains") + 1))
+        # "results/analysis/{analysis}/chains/{dataset}{sufix}.{chain}.{output}",
+        # analysis=wildcards.analysis,
+        # dataset=wildcards.dataset,
+        # sufix=wildcards.sufix,
+        # output=wildcards.output,
+        # chain=range(1, _get_analysis_param(wildcards, "chains") + 1))
+
+
+    # # Keep only non-empty files
+    # valid = []
+    # for f in files:
+    #     print(f)
+    #     if os.path.exists(f) and os.path.getsize(f) > 0:
+    #         c = f.split(".")[2]
+    #         valid.append("results/analysis/{analysis}/chains/{dataset}{sufix}." + c + ".{output}")
+
+
+    # valid = [
+    #     f for f in files
+    #     if os.path.exists(f) and os.path.getsize(f) > 0
+    # ]
+    # print(files)
+    # print(valid)
+    # return valid
     return files
 
 rule combine_chains:
@@ -137,11 +161,32 @@ rule combine_chains:
     #     "benchmarks/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
     params:
         burnin =  lambda wildcards: _get_analysis_param(wildcards, "burnin"),
-        input_command = lambda wildcards, input: " -log ".join(input) 
+        # input_command = lambda wildcards, input: " -log ".join(input) 
+        input_command = lambda wildcards, input: " -log ".join(
+            f for f in input.chain_files
+            if os.path.exists(f) and os.path.getsize(f) > 0)
     shell:
         """
-        logcombiner -log {params.input_command} -o {output.combined_chain} -b {params.burnin}  2>&1 | tee -a {log}
+         if [ "{wildcards.output}" = "traj" ]; then
+
+            first=$(echo "{input.chain_files}" | awk '{{print $1}}')
+            head -n 1 "$first" > {output.combined_chain}
+            for f in {input.chain_files}; do
+                tail -n +2 "$f"
+            done >> {output.combined_chain}
+
+        else
+
+            logcombiner \
+                -log {params.input_command} \
+                -o {output.combined_chain} \
+                -b {params.burnin} \
+                2>&1 | tee -a {log}
+
+        fi
+    
         """
+
 rule downsample_chains:
     input:
         file =  "results/analysis/{analysis}/{dataset}{sufix}.{output}"
@@ -171,6 +216,83 @@ rule summarize_trees:
         "logs/summarise_trees_{dataset}_{analysis}_{sufix}_{topo}.txt"
     benchmark:
         "benchmarks/summarise_tree_{dataset}_{analysis}_{sufix}_{topo}.benchmark.txt"
+    params:
+        command = config["treeannotator"].get("command"),
+        burnin = 0,
+        heights = config["treeannotator"].get("heights"),
+        topology = lambda wildcards: wildcards.topo
+    shell:
+        """
+        {params.command} -topology {params.topology} -height {params.heights} -b {params.burnin} -lowMem -file {input.trees} {output.summary_tree} 2>&1 | tee -a {log} 
+        """
+
+
+rule stochastic_mapping:
+    message: 
+        """
+        Run BDMM-Prime trajectory mapping
+        """
+    input:
+        alignment = lambda wildcards: _get_alignment(wildcards), 
+        sm_xml = lambda wildcards: _get_analysis_param(wildcards, "sm_xml"),
+        trace =  "results/analysis/{analysis}/{dataset}{sufix}.ds.log",
+        trees =  "results/analysis/{analysis}/{dataset}{sufix}.ds.trees",
+    output:
+        typed_trees =  "results/analysis/{analysis}/{dataset}{sufix}.typed.trees",
+        typed_node_trees =  "results/analysis/{analysis}/{dataset}{sufix}.typed.node.trees",
+        trajectories =  "results/analysis/{analysis}/{dataset}{sufix}.traj"
+    params:
+        beast_command = lambda wildcards: _get_analysis_param(wildcards, "command"), 
+        xml_params = lambda wildcards: str(_get_analysis_param(wildcards, "xml_params")).replace(":", "=").replace(
+            "{", "\"").replace("}", "\"").replace(" ", "").replace("'", ""),
+        folder_name = "results/analysis/{analysis}",
+        file_name = "{dataset}{sufix,.*}",
+    log:
+        "logs/beast_stochasticmapping_{analysis}_{dataset}_{sufix,.*}.txt"
+    shell:
+        """
+        {params.beast_command} \
+            -D aligned_fasta={input.alignment} \
+            -D {params.xml_params} \
+            -D file_name={params.folder_name}/{params.file_name} \
+            -overwrite {input.sm_xml} 2>&1 | tee -a {log}
+        """
+
+# TODO when to use typed results or stochastic mapping rule
+rule typed_results:
+    message: 
+        """
+        Check that typed trees and traj have been generated in beast analysis
+        """
+    input:
+        is_converged = "results/analysis/{analysis}/chains/is_converged_{dataset}{sufix,.*}.{chain}.r{i}.txt",
+    output:
+        typed_node_trees =  "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r{i}.typed.node.trees",
+        typed_trees =  "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r{i}.typed.trees",
+        traj = "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r{i}.traj",
+    params:
+        file_name = "results/analysis/{analysis}/chains/running/{dataset}{sufix,.*}.{chain}.r{i}"
+    shell:
+        """        
+        [ -f {params.file_name}.typed.node.trees ] && mv {params.file_name}.typed.node.trees {output.typed_node_trees}
+        [ -f {params.file_name}.typed.trees ] && mv {params.file_name}.typed.trees {output.typed_trees}
+        [ -f {params.file_name}.traj ] && mv {params.file_name}.traj  {output.traj}
+        touch {output.typed_node_trees} {output.typed_trees} {output.traj}
+        """
+
+rule summarize_typed_trees:
+    message: 
+        """
+        Summarize trees to {wildcards.topo} tree with median node heights with TreeAnnotator.
+        """
+    input:
+        trees =  "results/analysis/{analysis}/{dataset}{sufix}.typed.node.trees"
+    output:
+        summary_tree =  "results/analysis/{analysis}/{dataset}{sufix}.{topo}.typed.node.tree"
+    log:
+        "logs/summarise_typedtrees_{dataset}_{analysis}_{sufix}_{topo}.txt"
+    benchmark:
+        "benchmarks/summarise_typedtree_{dataset}_{analysis}_{sufix}_{topo}.benchmark.txt"
     params:
         command = config["treeannotator"].get("command"),
         burnin = 0,

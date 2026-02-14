@@ -32,7 +32,7 @@ if __name__ == '__main__':
             sequences = SeqIO.parse(seq_file, seq_format)
             for seq in sequences:
                 id = seq.id
-                if ids['seq_id'].str.contains(id).any():
+                if ids['seq_id'].str.contains(id).any() or ids['sample_id'].str.contains(id).any():
                     seq.id = ids.query("seq_id=='" + id + "'")["sample_id"].item()
                     seq.description = ""
                     SeqIO.write(seq, output, 'fasta')

@@ -17,18 +17,19 @@ subsample <- function(ids_file, metadata_file,
   set.seed(seed)
   ids <- read_tsv(ids_file)
   df <- read_tsv(metadata_file) %>% 
-    filter(sample_id %in% ids$sample_id | seq_id %in% ids$seq_id)
+    filter(sample_id %in% ids$sample_id | seq_id %in% ids$seq_id | strain %in% ids$strain)
     
   # Include and exclude specific sequences by id
   if (!is.null(include_file)) {
     include <- read_lines(include_file)
-    include_df <- df %>% filter(sample_id %in% include | seq_id %in% include)
+    include_df <- df %>% filter(sample_id %in% include | seq_id %in% include | strain %in% include)
   } else include_df <- tibble()
   
   if (!is.null(exclude_file)) {
     exclude <- read_lines(exclude_file)
+
     df <- df %>%  
-      filter(!sample_id %in% exclude | !seq_id %in% exclude)
+      filter(!sample_id %in% exclude, !seq_id %in% exclude, !strain %in% exclude)
   }
   
   # Subsample
@@ -53,13 +54,26 @@ subsample <- function(ids_file, metadata_file,
     
   } else if (method == "weights") {
     # 3. Sample according to given weights
+    
     if (n >= nrow(df)) subsample <- df
     else {
       weights_specs <- read_tsv(weights_file)
+      
+      # detect join variable
+      join_var <- intersect(names(df), names(weights_specs))
+      if (length(join_var) != 1)
+        stop("Need exactly one common join column")
+
       subsample <- df %>%
-        left_join(weights_specs) %>%
-        replace_na(list(p = 0)) %>%
-        sample_n(size = min(n(), n), replace = F, weight = p)
+        left_join(weights_specs, by = join_var) %>%
+        replace_na(list(w = 0)) %>%
+        group_by_at(join_var) %>%
+        mutate(n_var =  round(n * w),
+               n_seqs = n(),
+               n_take = min(n_var, n_seqs)) %>%
+        group_modify(~ .x %>%
+                       slice_sample(n = first(.x$n_take))) %>%
+        ungroup()
       }
     
   } else if (n == -1) subsample <- df 

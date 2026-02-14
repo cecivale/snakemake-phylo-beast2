@@ -32,8 +32,8 @@ localrules: all, clean
 wildcard_constraints:
     dataset="[A-Za-z0-9_]+",
     analysis="[A-Za-z0-9_]+",
-    # output="log|trees|typed.node.trees|typed.trees|traj",
-    output="log|trees",
+    output="log|trees|typed.node.trees|typed.trees|traj",
+    # output="log|trees",
     sufix="[.][0-9]|[^$]",
     i="[0-9]",
     dseed="[0-9]",
@@ -77,7 +77,7 @@ include: "rules/alignment.smk"
 
 module lapis_import:
     # TODO, not working snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
-    snakefile: "talking-to-LAPIS/python-snakemake/workflow/Snakefile"
+    snakefile: "talking-to-lapis/python-snakemake/workflow/Snakefile"
     config: config
 
 use rule load_metadata from lapis_import as lapis_select_samples
@@ -90,7 +90,7 @@ use rule load_sequences from lapis_import as lapis_import_sequences with:
     log:
         "logs/lapis_import_seqs_{dataset}_{sufix,.*}.txt" 
 
-# ruleorder: select_samples > lapis_select_samples 
+
 ruleorder: select_samples > lapis_select_samples 
 ruleorder: align > lapis_import_sequences 
 
@@ -100,3 +100,4 @@ include: "rules/phylodynamics.smk"
 ruleorder: beast > aggregate_runs 
 ruleorder: beast > combine_chains 
 ruleorder: aggregate_runs > combine_chains 
+ruleorder: combine_chains > stochastic_mapping 
