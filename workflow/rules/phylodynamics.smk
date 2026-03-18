@@ -19,7 +19,7 @@ checkpoint beast:
         folder_name = "results/analysis/{analysis}/chains",
         file_name = "{dataset}{sufix,.*}.{chain}.r{i}",
         state_file = "{dataset}{sufix,.*}.{chain}.state",
-        previous_file_name = lambda wildcards: wildcards.dataset + wildcards.sufix + "." + wildcards.chain + ".r" + str(int(wildcards.i) - 1) if wildcards.i != 0 else wildcards.dataset + wildcards.sufix + wildcards.chain + ".r{i}"
+        previous_file_name = lambda wildcards: wildcards.dataset + wildcards.sufix + "." + wildcards.chain + ".r" + str(int(wildcards.i) - 1) if int(wildcards.i) != 0 else wildcards.dataset + wildcards.sufix + wildcards.chain + ".r{i}"
     log:
         "logs/beast_{analysis}_{dataset}_{sufix,.*}_{chain}.r{i}.txt"
     benchmark:
@@ -45,8 +45,8 @@ checkpoint beast:
             
         else
             ACTION="resume"
-            scp {params.folder_name}/{params.previous_file_name}.log {params.folder_name}/running/{params.file_name}.log 
-            scp {params.folder_name}/{params.previous_file_name}.trees {params.folder_name}/running/{params.file_name}.trees
+            cp {params.folder_name}/{params.previous_file_name}.log {params.folder_name}/running/{params.file_name}.log 
+            cp {params.folder_name}/{params.previous_file_name}.trees {params.folder_name}/running/{params.file_name}.trees
 
             rm {params.folder_name}/{params.previous_file_name}.log {params.folder_name}/{params.previous_file_name}.trees {params.folder_name}/is_converged_{params.previous_file_name}.txt
         fi
@@ -90,6 +90,14 @@ def _is_converged(wildcards):
         end = "." + wildcards.output
         runs = int(trace[0][trace[0].find(start)+len(start):trace[0].find(end)])
 
+    ckpt = checkpoints.beast.get(
+            analysis=wildcards.analysis,
+            dataset=wildcards.dataset,
+            sufix=wildcards.sufix,
+            chain=wildcards.chain,
+            i=runs
+        )
+
     with checkpoints.beast.get(analysis = wildcards.analysis, dataset = wildcards.dataset, 
         sufix = wildcards.sufix, 
         chain = wildcards.chain, i = runs).output.is_converged.open() as f:
@@ -106,7 +114,8 @@ def _is_converged(wildcards):
 
 rule aggregate_runs:
     input:
-        run = _is_converged 
+        #run = _is_converged 
+        run = "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.r0.{output}",
     output:
         chain = "results/analysis/{analysis}/chains/{dataset}{sufix,.*}.{chain}.{output}",
     log:
@@ -149,59 +158,65 @@ def _get_chains(wildcards):
 rule combine_chains:
     message: 
         """
-        Combine chain files: {input.chain_files} with LogCombiner.
+        Combine and downsample chain files: {input.chain_files}.
         """
     input:
         chain_files = _get_chains  
     output:
         combined_chain = "results/analysis/{analysis}/{dataset}{sufix}.{output}",
-    # log:
-    #     "logs/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.txt"
+    log:
+        "logs/combine_chain_{analysis}/{dataset}{sufix}.{output}.txt"
     # benchmark:
     #     "benchmarks/combine_trace_{dataset}_{analysis}_{subsampling}.{dseed}.benchmark.txt"
     params:
         burnin =  lambda wildcards: _get_analysis_param(wildcards, "burnin"),
+        resample = config["logcombiner"].get("resample"),
+        resample_traj = config["logcombiner"].get("resample_trajs"),
         # input_command = lambda wildcards, input: " -log ".join(input) 
         input_command = lambda wildcards, input: " -log ".join(
             f for f in input.chain_files
-            if os.path.exists(f) and os.path.getsize(f) > 0)
+            if os.path.exists(f) and os.path.getsize(f) > 0),
+        input_traj = lambda wildcards, input: ",".join(
+            f for f in input.chain_files
+            if os.path.exists(f) and os.path.getsize(f) > 0
+        )
     shell:
         """
-         if [ "{wildcards.output}" = "traj" ]; then
-
-            first=$(echo "{input.chain_files}" | awk '{{print $1}}')
-            head -n 1 "$first" > {output.combined_chain}
-            for f in {input.chain_files}; do
-                tail -n +2 "$f"
-            done >> {output.combined_chain}
-
+        if [ "{wildcards.output}" = "traj" ]; then
+            Rscript workflow/snakemake-phylo-beast2/workflow/scripts/combine_trajectories.R \
+                --input {params.input_traj}  \
+                --output {output.combined_chain} \
+                --burnin {params.burnin} \
+                --subsample_n {params.resample_traj} \
+                2>&1 | tee -a {log}
         else
 
             logcombiner \
                 -log {params.input_command} \
                 -o {output.combined_chain} \
                 -b {params.burnin} \
+                -resample {params.resample} \
                 2>&1 | tee -a {log}
 
         fi
     
         """
 
-rule downsample_chains:
-    input:
-        file =  "results/analysis/{analysis}/{dataset}{sufix}.{output}"
-    output:
-        downsampled_file =  "results/analysis/{analysis}/{dataset}{sufix}.ds.{output}"
-    log:
-        "logs/downsample_{output}_{analysis}_{dataset}{sufix}.txt"
-    params:
-        command = config["logcombiner"].get("command"),
-        resample = config["logcombiner"].get("resample"),
-        burnin = lambda wildcards: _get_analysis_param(wildcards, "burnin"), 
-    shell:
-       """
-        {params.command} -log {input.file} -o {output.downsampled_file} -b {params.burnin} -resample {params.resample}  2>&1 | tee {log}
-        """
+# rule downsample_chains:
+#     input:
+#         file =  "results/analysis/{analysis}/{dataset}{sufix}.{output}"
+#     output:
+#         downsampled_file =  "results/analysis/{analysis}/{dataset}{sufix}.ds.{output}"
+#     log:
+#         "logs/downsample_{output}_{analysis}_{dataset}{sufix}.txt"
+#     params:
+#         command = config["logcombiner"].get("command"),
+#         resample = config["logcombiner"].get("resample"),
+#         burnin = lambda wildcards: _get_analysis_param(wildcards, "burnin"), 
+#     shell:
+#        """
+#         {params.command} -log {input.file} -o {output.downsampled_file} -b {params.burnin} -resample {params.resample}  2>&1 | tee {log}
+#         """
 
 rule summarize_trees:
     message: 
@@ -209,7 +224,7 @@ rule summarize_trees:
         Summarize trees to {wildcards.topo} tree with median node heights with TreeAnnotator.
         """
     input:
-        trees = "results/analysis/{analysis}/{dataset}{sufix}.ds.trees"
+        trees = "results/analysis/{analysis}/{dataset}{sufix}.trees"
     output:
         summary_tree =  "results/analysis/{analysis}/{dataset}{sufix}.{topo}.tree"
     log:
@@ -235,8 +250,8 @@ rule stochastic_mapping:
     input:
         alignment = lambda wildcards: _get_alignment(wildcards), 
         sm_xml = lambda wildcards: _get_analysis_param(wildcards, "sm_xml"),
-        trace =  "results/analysis/{analysis}/{dataset}{sufix}.ds.log",
-        trees =  "results/analysis/{analysis}/{dataset}{sufix}.ds.trees",
+        trace =  "results/analysis/{analysis}/{dataset}{sufix}.log",
+        trees =  "results/analysis/{analysis}/{dataset}{sufix}.trees",
     output:
         typed_trees =  "results/analysis/{analysis}/{dataset}{sufix}.typed.trees",
         typed_node_trees =  "results/analysis/{analysis}/{dataset}{sufix}.typed.node.trees",
