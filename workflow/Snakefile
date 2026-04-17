@@ -76,8 +76,8 @@ include: "rules/sequence_selection.smk"
 include: "rules/alignment.smk"
 
 module lapis_import:
-    # TODO, not working snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.1") 
-    snakefile: "talking-to-lapis/python-snakemake/workflow/Snakefile"
+    snakefile: github("cecivale/talking-to-lapis", path="python-snakemake/workflow/Snakefile", tag = "v0.2") 
+    # snakefile: "talking-to-lapis/python-snakemake/workflow/Snakefile"
     config: config
 
 use rule load_metadata from lapis_import as lapis_select_samples
